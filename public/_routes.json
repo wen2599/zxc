@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/fetch-url"],
+  "exclude": ["/style.css", "/script.js"]
+}
