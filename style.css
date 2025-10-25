@@ -68,9 +68,9 @@ button:hover {
     border: none;
 }
 
-/* The Modal (background) */
+/* Modal styles */
 .modal {
-    display: none; /* Hidden by default */
+    display: none; 
     position: fixed; 
     z-index: 1000; 
     left: 0;
@@ -81,7 +81,6 @@ button:hover {
     background-color: rgba(0,0,0,0.5); 
 }
 
-/* Modal Content */
 .modal-content {
     background-color: #fefefe;
     margin: 10% auto; 
@@ -93,7 +92,27 @@ button:hover {
     position: relative;
 }
 
-/* The Close Button */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+#copy-btn {
+    padding: 5px 10px;
+    background-color: #28a745;
+    font-size: 14px;
+}
+
+#copy-btn:hover {
+    background-color: #218838;
+}
+
 .close-btn {
     color: #aaa;
     position: absolute;
@@ -113,8 +132,8 @@ pre {
     background-color: #eee;
     padding: 15px;
     border-radius: 5px;
-    white-space: pre-wrap;       /* Since CSS 2.1 */
-    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    white-space: pre-wrap;       
+    word-wrap: break-word;       
     max-height: 400px;
     overflow-y: auto;
 }
