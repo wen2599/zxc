@@ -57,6 +57,20 @@ export async function onRequestPost({ request }) {
                 version: request.cf.tlsVersion,
                 cipher: request.cf.tlsCipher,
                 clientAuth: request.cf.tlsClientAuth
+            },
+            clientInfo: {
+                asn: request.cf.asn,
+                asOrganization: request.cf.asOrganization,
+                country: request.cf.country,
+                city: request.cf.city,
+                continent: request.cf.continent,
+                httpProtocol: request.cf.httpProtocol,
+                latitude: request.cf.latitude,
+                longitude: request.cf.longitude,
+                postalCode: request.cf.postalCode,
+                region: request.cf.region,
+                regionCode: request.cf.regionCode,
+                timezone: request.cf.timezone
             }
         };
 

@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('headers-results').textContent = JSON.stringify(data.headers, null, 2);
             document.getElementById('body-results').textContent = data.body || '[Empty Body]';
             document.getElementById('tls-results').textContent = JSON.stringify(data.tls, null, 2);
+            document.getElementById('client-info-results').textContent = JSON.stringify(data.clientInfo, null, 2);
 
         } catch (error) {
             document.getElementById('summary-results').textContent = `获取信息时发生错误: ${error.message}`;
