@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const debugControls = document.getElementById('debug-controls');
     const showDebugBtn = document.getElementById('show-debug-btn');
     const debugModal = document.getElementById('debug-modal');
-    const resultsDiv = document.getElementById('results');
     const closeModalBtn = document.querySelector('.close-btn');
     const copyBtn = document.getElementById('copy-btn');
+    const tabContainer = document.querySelector('.tab-container');
 
     let currentUrl = '';
 
@@ -29,8 +29,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        resultsDiv.textContent = '加载中...';
-        copyBtn.textContent = '一键复制';
+        // Reset UI
+        const allTabs = tabContainer.querySelectorAll('.tab-content pre');
+        allTabs.forEach(tab => tab.textContent = '加载中...');
+        copyBtn.textContent = '复制当前Tab';
         debugModal.style.display = 'block';
 
         try {
@@ -43,44 +45,44 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || '请求失败');
 
-            // Format the output for better readability
-            const formattedOutput = 
-`=======================================
-[+] Request Details
-=======================================
-Initial URL: ${data.requestDetails.initialUrl}
-Final URL:   ${data.requestDetails.finalUrl}
-Redirected:  ${data.requestDetails.redirected}
-CF-Colo:     ${data.requestDetails.colo}
-
-=======================================
-[+] DNS Info (A Records)
-=======================================
-Hostname: ${data.dnsInfo.hostname}
-${data.dnsInfo.answers ? data.dnsInfo.answers.join('\n') : 'N/A'}
-
-=======================================
-[+] Response (Status: ${data.response.status} ${data.response.statusText})
-=======================================
-
---- HEADERS ---
-${JSON.stringify(data.response.headers, null, 2)}
-
---- BODY (first 2000 chars) ---
-${data.response.body || '[Empty Body]'}`;
-
-            resultsDiv.textContent = formattedOutput;
+            // Populate tabs
+            document.getElementById('summary-results').textContent = JSON.stringify(data.summary, null, 2);
+            document.getElementById('dns-results').textContent = JSON.stringify(data.dns, null, 2);
+            document.getElementById('headers-results').textContent = JSON.stringify(data.headers, null, 2);
+            document.getElementById('body-results').textContent = data.body || '[Empty Body]';
+            document.getElementById('tls-results').textContent = JSON.stringify(data.tls, null, 2);
 
         } catch (error) {
-            resultsDiv.textContent = `获取信息时发生错误: ${error.message}`;
+            document.getElementById('summary-results').textContent = `获取信息时发生错误: ${error.message}`;
+            allTabs.forEach(tab => {
+                if (tab.id !== 'summary-results') tab.textContent = '错误，请先查看概览Tab。';
+            });
         }
     });
 
+    // Tab switching logic
+    tabContainer.addEventListener('click', (event) => {
+        if (!event.target.matches('.tab-button')) return;
+
+        // Update button styles
+        const buttons = tabContainer.querySelectorAll('.tab-button');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Show correct content
+        const contents = tabContainer.querySelectorAll('.tab-content');
+        contents.forEach(content => content.classList.remove('active'));
+        const activeTabId = event.target.dataset.tab;
+        document.getElementById(activeTabId).classList.add('active');
+    });
+
     copyBtn.addEventListener('click', function() {
-        const textToCopy = resultsDiv.textContent;
-        navigator.clipboard.writeText(textToCopy).then(() => {
+        const activeTabContent = document.querySelector('.tab-content.active pre');
+        if (!activeTabContent) return;
+
+        navigator.clipboard.writeText(activeTabContent.textContent).then(() => {
             copyBtn.textContent = '已复制!';
-            setTimeout(() => { copyBtn.textContent = '一键复制'; }, 2000);
+            setTimeout(() => { copyBtn.textContent = '复制当前Tab'; }, 2000);
         }).catch(err => {
             console.error('复制失败: ', err);
             copyBtn.textContent = '复制失败';

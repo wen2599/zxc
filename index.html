@@ -27,8 +27,36 @@
             <div class="modal-header">
               <h2>调试结果</h2>
             </div>
-            <button id="copy-btn">一键复制</button>
-            <pre id="results"></pre>
+            <button id="copy-btn">复制当前Tab</button>
+            
+            <!-- Tab navigation -->
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="tab-summary">概览</button>
+                    <button class="tab-button" data-tab="tab-dns">DNS</button>
+                    <button class="tab-button" data-tab="tab-headers">响应头</button>
+                    <button class="tab-button" data-tab="tab-body">响应体</button>
+                    <button class="tab-button" data-tab="tab-tls">TLS</button>
+                </div>
+
+                <!-- Tab content -->
+                <div id="tab-summary" class="tab-content active">
+                    <pre id="summary-results"></pre>
+                </div>
+                <div id="tab-dns" class="tab-content">
+                    <pre id="dns-results"></pre>
+                </div>
+                <div id="tab-headers" class="tab-content">
+                    <pre id="headers-results"></pre>
+                </div>
+                <div id="tab-body" class="tab-content">
+                    <pre id="body-results"></pre>
+                </div>
+                <div id="tab-tls" class="tab-content">
+                    <pre id="tls-results"></pre>
+                </div>
+            </div>
+
           </div>
         </div>
 

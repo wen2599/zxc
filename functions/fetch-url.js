@@ -1,59 +1,62 @@
+async function queryDns(hostname, type) {
+    const start = Date.now();
+    const url = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=${type}`;
+    try {
+        const response = await fetch(url, { headers: { 'accept': 'application/dns-json' } });
+        const duration = Date.now() - start;
+        if (!response.ok) return { type, duration, error: `DNS query failed with status ${response.status}` };
+        
+        const data = await response.json();
+        const answers = data.Answer ? data.Answer.map(rec => `${rec.data} (TTL: ${rec.TTL})`) : ['No records found.'];
+        return { type, duration, answers };
+    } catch (e) {
+        const duration = Date.now() - start;
+        return { type, duration, error: e.message };
+    }
+}
+
 export async function onRequestPost({ request }) {
     try {
         const { url } = await request.json();
-
         if (!url) {
-            return new Response(JSON.stringify({ error: 'URL is required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-            });
+            return new Response(JSON.stringify({ error: 'URL is required' }), { status: 400 });
         }
 
         const urlObject = new URL(url);
         const hostname = urlObject.hostname;
 
-        // --- DNS-over-HTTPS Query ---
-        const dnsQueryUrl = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`;
-        let dnsInfo = {};
-        try {
-            const dnsResponse = await fetch(dnsQueryUrl, { headers: { 'accept': 'application/dns-json' } });
-            if (dnsResponse.ok) {
-                const dnsData = await dnsResponse.json();
-                dnsInfo = {
-                    hostname: hostname,
-                    answers: dnsData.Answer ? dnsData.Answer.map(rec => `${rec.name} -> ${rec.data} (TTL: ${rec.TTL})`) : ['No A records found.'],
-                    type: 'A'
-                };
-            } else {
-                dnsInfo = { error: `DNS query failed with status: ${dnsResponse.status}` };
-            }
-        } catch (e) {
-            dnsInfo = { error: `DNS query exception: ${e.message}` };
-        }
+        // --- Perform all DNS queries in parallel ---
+        const dnsPromises = ['A', 'AAAA', 'CNAME', 'MX', 'TXT'].map(type => queryDns(hostname, type));
+        const dnsResults = await Promise.all(dnsPromises);
 
-        // --- Main Fetch ---
+        // --- Main Fetch with timing ---
+        const fetchStart = Date.now();
         const response = await fetch(url, { redirect: 'follow' });
+        const fetchDuration = Date.now() - fetchStart;
+
         const headers = {};
-        response.headers.forEach((value, name) => {
-            headers[name] = value;
-        });
+        response.headers.forEach((value, name) => { headers[name] = value; });
 
         const body = await response.text();
         
         // --- Assemble All Data ---
         const data = {
-            requestDetails: {
+            summary: {
                 initialUrl: url,
                 finalUrl: response.url,
                 redirected: response.redirected,
-                colo: request.cf.colo, // Cloudflare datacenter location
-            },
-            dnsInfo: dnsInfo,
-            response: {
+                colo: request.cf.colo, // Cloudflare datacenter
                 status: response.status,
                 statusText: response.statusText,
-                headers: headers,
-                body: body.substring(0, 2000), // Truncate body to avoid oversized responses
+                fetchDuration: `${fetchDuration} ms`
+            },
+            dns: dnsResults,
+            headers: headers,
+            body: body.substring(0, 5000), // Increased body limit
+            tls: {
+                version: request.cf.tlsVersion,
+                cipher: request.cf.tlsCipher,
+                clientAuth: request.cf.tlsClientAuth
             }
         };
 
