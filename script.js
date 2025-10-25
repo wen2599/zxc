@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentUrl = '';
 
-    // 1. Load the iframe
     urlForm.addEventListener('submit', function(event) {
         event.preventDefault();
         let url = urlInput.value.trim();
@@ -24,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
         debugControls.style.display = 'block';
     });
 
-    // 2. Show the debug modal
     showDebugBtn.addEventListener('click', async function() {
         if (!currentUrl) {
             alert('请先加载一个页面。');
@@ -32,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         resultsDiv.textContent = '加载中...';
-        copyBtn.textContent = '一键复制'; // Reset button text
+        copyBtn.textContent = '一键复制';
         debugModal.style.display = 'block';
 
         try {
@@ -45,28 +43,50 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || '请求失败');
 
-            resultsDiv.textContent = JSON.stringify(data, null, 2);
+            // Format the output for better readability
+            const formattedOutput = 
+`=======================================
+[+] Request Details
+=======================================
+Initial URL: ${data.requestDetails.initialUrl}
+Final URL:   ${data.requestDetails.finalUrl}
+Redirected:  ${data.requestDetails.redirected}
+CF-Colo:     ${data.requestDetails.colo}
+
+=======================================
+[+] DNS Info (A Records)
+=======================================
+Hostname: ${data.dnsInfo.hostname}
+${data.dnsInfo.answers ? data.dnsInfo.answers.join('\n') : 'N/A'}
+
+=======================================
+[+] Response (Status: ${data.response.status} ${data.response.statusText})
+=======================================
+
+--- HEADERS ---
+${JSON.stringify(data.response.headers, null, 2)}
+
+--- BODY (first 2000 chars) ---
+${data.response.body || '[Empty Body]'}`;
+
+            resultsDiv.textContent = formattedOutput;
 
         } catch (error) {
             resultsDiv.textContent = `获取信息时发生错误: ${error.message}`;
         }
     });
 
-    // 3. Implement the copy functionality
     copyBtn.addEventListener('click', function() {
         const textToCopy = resultsDiv.textContent;
         navigator.clipboard.writeText(textToCopy).then(() => {
             copyBtn.textContent = '已复制!';
-            setTimeout(() => { 
-                copyBtn.textContent = '一键复制'; 
-            }, 2000); // Revert back after 2 seconds
+            setTimeout(() => { copyBtn.textContent = '一键复制'; }, 2000);
         }).catch(err => {
             console.error('复制失败: ', err);
             copyBtn.textContent = '复制失败';
         });
     });
 
-    // 4. Handle closing the modal
     closeModalBtn.addEventListener('click', () => debugModal.style.display = 'none');
     window.addEventListener('click', (event) => {
         if (event.target == debugModal) {

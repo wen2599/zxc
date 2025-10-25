@@ -9,7 +9,30 @@ export async function onRequestPost({ request }) {
             });
         }
 
-        const response = await fetch(url);
+        const urlObject = new URL(url);
+        const hostname = urlObject.hostname;
+
+        // --- DNS-over-HTTPS Query ---
+        const dnsQueryUrl = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`;
+        let dnsInfo = {};
+        try {
+            const dnsResponse = await fetch(dnsQueryUrl, { headers: { 'accept': 'application/dns-json' } });
+            if (dnsResponse.ok) {
+                const dnsData = await dnsResponse.json();
+                dnsInfo = {
+                    hostname: hostname,
+                    answers: dnsData.Answer ? dnsData.Answer.map(rec => `${rec.name} -> ${rec.data} (TTL: ${rec.TTL})`) : ['No A records found.'],
+                    type: 'A'
+                };
+            } else {
+                dnsInfo = { error: `DNS query failed with status: ${dnsResponse.status}` };
+            }
+        } catch (e) {
+            dnsInfo = { error: `DNS query exception: ${e.message}` };
+        }
+
+        // --- Main Fetch ---
+        const response = await fetch(url, { redirect: 'follow' });
         const headers = {};
         response.headers.forEach((value, name) => {
             headers[name] = value;
@@ -17,11 +40,21 @@ export async function onRequestPost({ request }) {
 
         const body = await response.text();
         
+        // --- Assemble All Data ---
         const data = {
-            status: response.status,
-            statusText: response.statusText,
-            headers: headers,
-            body: body.substring(0, 2000), // 截断body以避免过大的响应
+            requestDetails: {
+                initialUrl: url,
+                finalUrl: response.url,
+                redirected: response.redirected,
+                colo: request.cf.colo, // Cloudflare datacenter location
+            },
+            dnsInfo: dnsInfo,
+            response: {
+                status: response.status,
+                statusText: response.statusText,
+                headers: headers,
+                body: body.substring(0, 2000), // Truncate body to avoid oversized responses
+            }
         };
 
         return new Response(JSON.stringify(data), {
