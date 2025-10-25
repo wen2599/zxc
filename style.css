@@ -93,18 +93,18 @@ button:hover {
 }
 
 .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Reduced margin */
 }
 
 .modal-header h2 {
     margin: 0;
+    text-align: center; /* Center the title */
 }
 
 #copy-btn {
-    padding: 5px 10px;
+    display: block; /* Make it a block element */
+    margin: 0 auto 15px auto; /* Center it and add margin below */
+    padding: 8px 16px;
     background-color: #28a745;
     font-size: 14px;
 }
