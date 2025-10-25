@@ -1,36 +1,72 @@
-document.getElementById('url-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
+document.addEventListener('DOMContentLoaded', function() {
 
-    const url = document.getElementById('url-input').value;
-    const loading = document.getElementById('loading');
-    const resultsContainer = document.getElementById('results-container');
+    const urlForm = document.getElementById('url-form');
+    const urlInput = document.getElementById('url-input');
+    const iframe = document.getElementById('content-iframe');
+    const debugControls = document.getElementById('debug-controls');
+    const showDebugBtn = document.getElementById('show-debug-btn');
+    const debugModal = document.getElementById('debug-modal');
     const resultsDiv = document.getElementById('results');
+    const closeModalBtn = document.querySelector('.close-btn');
 
-    loading.style.display = 'block';
-    resultsContainer.style.display = 'none';
+    let currentUrl = '';
 
-    try {
-        // 注意：现在我们调用的是位于 /fetch-url 的Cloudflare Function
-        const response = await fetch('/fetch-url', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ url: url })
-        });
+    // 1. Handle the main form submission to load the iframe
+    urlForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        let url = urlInput.value.trim();
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || '请求失败');
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
         }
 
-        resultsDiv.textContent = JSON.stringify(data, null, 2);
+        currentUrl = url;
+        iframe.src = currentUrl;
+        debugControls.style.display = 'block'; // Show the 'View Debug Info' button
+    });
 
-    } catch (error) {
-        resultsDiv.textContent = `获取信息时发生错误: ${error.message}`;
-    } finally {
-        loading.style.display = 'none';
-        resultsContainer.style.display = 'block';
-    }
+    // 2. Handle the 'View Debug Info' button click
+    showDebugBtn.addEventListener('click', async function() {
+        if (!currentUrl) {
+            alert('请先加载一个页面。');
+            return;
+        }
+
+        resultsDiv.textContent = '加载中...';
+        debugModal.style.display = 'block'; // Show the modal
+
+        try {
+            const response = await fetch('/fetch-url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: currentUrl })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || '请求失败');
+            }
+
+            resultsDiv.textContent = JSON.stringify(data, null, 2);
+
+        } catch (error) {
+            resultsDiv.textContent = `获取信息时发生错误: ${error.message}`;
+        }
+    });
+
+    // 3. Handle closing the modal
+    closeModalBtn.addEventListener('click', function() {
+        debugModal.style.display = 'none';
+    });
+
+    // Also close the modal if the user clicks anywhere outside of the modal content
+    window.addEventListener('click', function(event) {
+        if (event.target == debugModal) {
+            debugModal.style.display = 'none';
+        }
+    });
+
 });
