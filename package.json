@@ -1,0 +1,9 @@
+{
+  "name": "url-debugger-cloudflare",
+  "version": "1.0.0",
+  "description": "A tool to view debug information for a given URL, for Cloudflare Pages.",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler pages deploy ."
+  }
+}

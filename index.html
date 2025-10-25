@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL 调试工具</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>URL 调试信息查看器</h1>
+        <p>输入一个URL，查看它的网络调试信息。</p>
+        <form id="url-form">
+            <input type="text" id="url-input" placeholder="例如：https://www.google.com" required>
+            <button type="submit">获取信息</button>
+        </form>
+        <div id="loading" style="display: none;">正在加载...</div>
+        <div id="results-container" style="display: none;">
+            <h2>调试结果</h2>
+            <div id="results"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
